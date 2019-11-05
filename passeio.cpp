@@ -14,6 +14,7 @@ using namespace std;
 
 #define QTD_MAQUINAS 2
 #define NUCLEOS_POR_MAQUINA 4
+#define NUCLEOS_TOTAIS 8 
 #define TAMANHO_TABULEIRO 6
 
 typedef struct{
@@ -27,7 +28,7 @@ inline vector<vector<pair<int, int>>> procuraCaminho(void * arg); //recebe como 
 
 inline void inicializaCaminho(int indiceAtual, vector<pair<int, pair<int, int>>> &caminho, stack<pair<int, pair<int, int>>> &arvoreExpansao);
 
-inline void gerarMovimentosPossiveis(int indiceAtual, vector<pair<int, pair<int, int>>> &caminho, stack<pair<int, pair<int, int>>> &arvoreExpansao);
+inline void gerarMovimentosPossiveis(vector<pair<int, pair<int, int>>> &caminho, stack<pair<int, pair<int, int>>> &arvoreExpansao);
 
 int main(int argc, char *argv[]){
 	int qtd_tasks, id_task;
@@ -78,7 +79,7 @@ inline vector<vector<pair<int, int>>> procuraCaminho(void * arg){
 	return a;
 }
 
-inline void gerarMovimentosPossiveis(int indiceAtual, vector<pair<int, pair<int, int>>> &caminho, stack<pair<int, pair<int, int>>> &arvoreExpansao){
+inline void gerarMovimentosPossiveis(vector<pair<int, pair<int, int>>> &caminho, stack<pair<int, pair<int, int>>> &arvoreExpansao){
 	int movimentos[][2] = {{-2, 1}, {-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};	
 	int pos_x = caminho.back().second.first;
 	int pos_y = caminho.back().second.second;
@@ -91,10 +92,27 @@ inline void gerarMovimentosPossiveis(int indiceAtual, vector<pair<int, pair<int,
 }
 
 inline void inicializaCaminho(int indiceAtual, vector<pair<int, pair<int, int>>> &caminho, stack<pair<int, pair<int, int>>> &arvoreExpansao){
-	gerarMovimentosPossiveis(caminho, arvoreExpansao);
-	printf("indice: %d\n | mov: %d - %d\n", indiceAtual, arvoreExpansao.top().second.first, arvoreExpansao.top().second.second);
-	
-	
+	int movimentos[][2] = {{-2, 1}, {-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};	
+	vector<vector<pair<int, int>>> arvoreCompleta(2);
+	vector<pair<int, int>> maiorNivel;
+	maiorNivel.push_back(caminho.back().second);
+	while(maiorNivel.size() < NUCLEOS_TOTAIS){
+		arvoreCompleta.push_back(maiorNivel);
+		maiorNivel.clear();
+		for(pair<int, int> i : arvoreCompleta.back()){
+			int pos_x = i.first;
+			int pos_y = i.second;
+			for(int i = 0; i < 8; i++){
+				int mov_x = pos_x + movimentos[i][0];
+				int mov_y = pos_y + movimentos[i][1];
+				if(mov_x >= 0 and mov_x < TAMANHO_TABULEIRO and mov_y >= 0 and mov_y < TAMANHO_TABULEIRO) maiorNivel.push_back(make_pair(mov_x, mov_y));	
+			}
+		}
+	}
+	printf("indice: %d\n", indiceAtual);
+	for(int i = 0; i < arvoreCompleta.size(); i++)
+		for(int j = 0; j < arvoreCompleta[i].size(); j++)
+			printf("\t pos: %d - %d\n", arvoreCompleta[i][j].first, arvoreCompleta[i][j].second);
 }
 
 
