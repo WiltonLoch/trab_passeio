@@ -12,9 +12,9 @@
 
 using namespace std;
 
-#define QTD_MAQUINAS 2
+#define QTD_MAQUINAS 5
 #define NUCLEOS_POR_MAQUINA 4
-#define NUCLEOS_TOTAIS 8 
+#define NUCLEOS_TOTAIS 20 
 #define TAMANHO_TABULEIRO 6
 
 typedef struct{
@@ -93,26 +93,27 @@ inline void gerarMovimentosPossiveis(vector<pair<int, pair<int, int>>> &caminho,
 
 inline void inicializaCaminho(int indiceAtual, vector<pair<int, pair<int, int>>> &caminho, stack<pair<int, pair<int, int>>> &arvoreExpansao){
 	int movimentos[][2] = {{-2, 1}, {-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};	
-	vector<vector<pair<int, int>>> arvoreCompleta(2);
-	vector<pair<int, int>> maiorNivel;
-	maiorNivel.push_back(caminho.back().second);
+	vector<vector<pair<int, pair<int, int>>>> arvoreCompleta;
+	vector<pair<int, pair<int, int>>> maiorNivel;
+	maiorNivel.push_back(make_pair(-1, caminho.back().second));
 	while(maiorNivel.size() < NUCLEOS_TOTAIS){
 		arvoreCompleta.push_back(maiorNivel);
 		maiorNivel.clear();
-		for(pair<int, int> i : arvoreCompleta.back()){
-			int pos_x = i.first;
-			int pos_y = i.second;
-			for(int i = 0; i < 8; i++){
-				int mov_x = pos_x + movimentos[i][0];
-				int mov_y = pos_y + movimentos[i][1];
-				if(mov_x >= 0 and mov_x < TAMANHO_TABULEIRO and mov_y >= 0 and mov_y < TAMANHO_TABULEIRO) maiorNivel.push_back(make_pair(mov_x, mov_y));	
+		for(int i = 0; i < arvoreCompleta.back().size(); i++){
+			int pos_x = arvoreCompleta.back()[i].second.first;
+			int pos_y = arvoreCompleta.back()[i].second.second;
+			for(int j = 0; j < 8; j++){
+				int mov_x = pos_x + movimentos[j][0];
+				int mov_y = pos_y + movimentos[j][1];
+				if(mov_x >= 0 and mov_x < TAMANHO_TABULEIRO and mov_y >= 0 and mov_y < TAMANHO_TABULEIRO) maiorNivel.push_back(make_pair(i, make_pair(mov_x, mov_y)));	
 			}
 		}
 	}
+	arvoreCompleta.push_back(maiorNivel);
 	printf("indice: %d\n", indiceAtual);
 	for(int i = 0; i < arvoreCompleta.size(); i++)
 		for(int j = 0; j < arvoreCompleta[i].size(); j++)
-			printf("\t pos: %d - %d\n", arvoreCompleta[i][j].first, arvoreCompleta[i][j].second);
+			printf("\tnivel = %d, pai = %d, pos: %d - %d\n", i, arvoreCompleta[i][j].first, arvoreCompleta[i][j].second.first, arvoreCompleta[i][j].second.second);
 }
 
 
