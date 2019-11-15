@@ -20,22 +20,32 @@ using namespace std;
 typedef struct{
 	int indiceAtual;
 	int qtd_tasks;
+	int nucleos_por_maquina;
+	int tamanho_tabuleiro;
 	int pos_inicial_x;
 	int pos_inicial_y;
 } param;
 
 inline void * procuraCaminhos(void * args);
-
-inline void gerarMovimentosPossiveis(vector<pair<int, pair<int, int>>> &caminho, stack<pair<int, pair<int, int>>> &arvoreExpansao);
-
+inline void gerarMovimentosPossiveis(int tamanho_tabuleiro, vector<pair<int, pair<int, int>>> &caminho, map<pair<int, int>, bool> &posicoes_visitadas, stack<pair<int, pair<int, int>>> &arvoreExpansao);
 inline void imprimeCaminho(vector<pair<int, pair<int, int>>> &caminho);
-
 inline void empilhaPosOrdem(int elemento_inferior, int elemento_superior, int nivel_base, stack<pair<int, pair<int, int>>> &arvoreExpansao, vector<vector<pair<int, pair<int, int>>>> &arvoreCompleta);
+inline void imprimeArvore(stack<pair<int, pair<int, int>>> arvoreExpansao);
+inline void imprimeCaminhoHorizontal(int tamanho_tabuleiro, vector<pair<int, pair<int, int>>> &caminho);
+inline void imprimeCaminhoCoordenado(vector<pair<int, pair<int, int>>> &caminho);
 
 int main(int argc, char *argv[]){
 	int qtd_tasks, id_task;
 	int pos_inicial_x = 2;
-		int pos_inicial_y = 2;
+	int pos_inicial_y = 2;
+
+	if(argc < 3){
+		printf("Chamada incorreta!\n Uso: passeio <tamanho tabuleiro> <threads>\n");
+		return 0;
+	}
+
+	int tamanho_tabuleiro = stoi(argv[1]);
+	int nucleos_por_maquina = stoi(argv[2]);
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &id_task);	
@@ -44,35 +54,26 @@ int main(int argc, char *argv[]){
 	pthread_t * threads;
 	param * parametros;
 
-	threads = (pthread_t *) malloc(NUCLEOS_POR_MAQUINA * sizeof(pthread_t));
-	parametros = (param *) malloc(NUCLEOS_POR_MAQUINA * sizeof(param));
+	threads = (pthread_t *) malloc(nucleos_por_maquina * sizeof(pthread_t));
+	parametros = (param *) malloc(nucleos_por_maquina * sizeof(param));
 
 	printf("qtd: %d\n", qtd_tasks);
 
-	for(int i = 0; i < NUCLEOS_POR_MAQUINA; i++){
-		/* vector<pair<int, pair<int, int>>> *caminho = new vector<pair<int, pair<int, int>>>(); */
-		/* parametros[i].caminho = caminho; */
-		/* stack<pair<int, pair<int, int>>> *arvoreExpansao = new stack<pair<int, pair<int, int>>>(); */
-		/* parametros[i].arvoreExpansao = arvoreExpansao; */
-	//	printf("%p -- %p\n", parametros[i].caminho, parametros[i].arvoreExpansao);
-
-		/* parametros[i].caminho->push_back(make_pair(0, make_pair(pos_inicial_x, pos_inicial_y))); */
-		parametros[i].indiceAtual = id_task * NUCLEOS_POR_MAQUINA + i;
+	for(int i = 0; i < nucleos_por_maquina; i++){
+		parametros[i].indiceAtual = id_task * nucleos_por_maquina + i;
 		parametros[i].qtd_tasks = qtd_tasks;
+		parametros[i].nucleos_por_maquina = nucleos_por_maquina;
+		parametros[i].tamanho_tabuleiro = tamanho_tabuleiro;
 		parametros[i].pos_inicial_x = pos_inicial_x;
 		parametros[i].pos_inicial_y = pos_inicial_y;
 
 		pthread_create(threads + i, NULL, procuraCaminhos, (void *) (parametros + i));
 	}
 	
-	for(int i = 0; i < NUCLEOS_POR_MAQUINA; i++){
+	for(int i = 0; i < nucleos_por_maquina; i++){
 		pthread_join(threads[i], NULL);
 	}
 	
-	/* for(int i = 0; i < NUCLEOS_POR_MAQUINA; i++){ */
-	/* 	delete parametros[i].caminho; */
-	/* 	delete parametros[i].arvoreExpansao; */
-	/* } */
 
 	free(threads);
 	free(parametros);
@@ -80,26 +81,6 @@ int main(int argc, char *argv[]){
 
 }
 
-/* inline vector<vector<pair<int, int>>> procuraCaminho(void * arg){ */
-/* 	param * p = (param *) arg; */
-
-	/* printf("aaa\n"); */
-
-	/* vector<vector<pair<int, int>>> a; */
-	/* return a; */
-/* } */
-
-inline void gerarMovimentosPossiveis(vector<pair<int, pair<int, int>>> &caminho, stack<pair<int, pair<int, int>>> &arvoreExpansao){
-	int movimentos[][2] = {{-2, 1}, {-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};	
-	int pos_x = caminho.back().second.first;
-	int pos_y = caminho.back().second.second;
-	int nivel = caminho.back().first;
-	for(int i = 0; i < 8; i++){
-		int mov_x = pos_x + movimentos[i][0];
-		int mov_y = pos_y + movimentos[i][1];
-		if(mov_x >= 0 and mov_x < TAMANHO_TABULEIRO and mov_y >= 0 and mov_y < TAMANHO_TABULEIRO) arvoreExpansao.push(make_pair(nivel + 1, make_pair(mov_x, mov_y)));	
-	}
-}
 
 inline void * procuraCaminhos(void * args){
 	int movimentos[][2] = {{-2, 1}, {-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};	
@@ -108,6 +89,8 @@ inline void * procuraCaminhos(void * args){
 
 	int indiceAtual = p->indiceAtual;
 	int qtd_maquinas = p->qtd_tasks;
+	int tamanho_tabuleiro = p->tamanho_tabuleiro;
+	int nucleos_por_maquina = p->nucleos_por_maquina;
 	int pos_inicial_x = p->pos_inicial_x;
 	int pos_inicial_y = p->pos_inicial_y;
 
@@ -119,7 +102,7 @@ inline void * procuraCaminhos(void * args){
 	map<pair<int, int>, bool> posicoes_visitadas;
 
 	maiorNivel.push_back(make_pair(-1, make_pair(pos_inicial_x, pos_inicial_y)));
-	while(maiorNivel.size() < NUCLEOS_POR_MAQUINA * qtd_maquinas * 3){
+	while(maiorNivel.size() < nucleos_por_maquina * qtd_maquinas * 3){
 		arvoreCompleta.push_back(maiorNivel);
 		maiorNivel.clear();
 		for(int i = 0; i < arvoreCompleta.back().size(); i++){
@@ -130,7 +113,7 @@ inline void * procuraCaminhos(void * args){
 				int mov_y = pos_y + movimentos[j][1];
 				int ancestral_avaliado = arvoreCompleta.back()[i].first;
 				int nivel_avaliado = arvoreCompleta.size() - 2;
-				if(mov_x >= 0 and mov_x < TAMANHO_TABULEIRO and mov_y >= 0 and mov_y < TAMANHO_TABULEIRO){ 
+				if(mov_x >= 0 and mov_x < tamanho_tabuleiro and mov_y >= 0 and mov_y < tamanho_tabuleiro){ 
 					while(ancestral_avaliado != -1){
 						if(!(mov_x == arvoreCompleta[nivel_avaliado][ancestral_avaliado].second.first and mov_y == arvoreCompleta[nivel_avaliado][ancestral_avaliado].second.second)){
 							ancestral_avaliado = arvoreCompleta[nivel_avaliado][ancestral_avaliado].first;
@@ -155,16 +138,16 @@ inline void * procuraCaminhos(void * args){
 
 	int nivel_base = arvoreCompleta.size() - 1; 
 
-	int nucleos_totais = qtd_maquinas * NUCLEOS_POR_MAQUINA;
+	int nucleos_totais = qtd_maquinas * nucleos_por_maquina;
 
 	int sobra = arvoreCompleta[nivel_base].size() % nucleos_totais; 
 	int corte = arvoreCompleta[nivel_base].size()/nucleos_totais;
-	printf("sobra: %d\n", sobra);
-	printf("corte: %d\n", corte);
+	/* printf("sobra: %d\n", sobra); */
+	/* printf("corte: %d\n", corte); */
 	int elemento_inferior = indiceAtual * corte + (indiceAtual < sobra ? indiceAtual : sobra);
 	int elemento_superior = (indiceAtual + 1) * corte + (indiceAtual < sobra ? indiceAtual + 1 : sobra) - 1;
 
-	printf("li: %d, ls: %d\n", elemento_inferior, elemento_superior);
+	/* printf("li: %d, ls: %d\n", elemento_inferior, elemento_superior); */
 
 	int primeiro_pai = arvoreCompleta[nivel_base][elemento_inferior].first, ultimo_pai = arvoreCompleta[nivel_base][elemento_superior].first;
 
@@ -192,24 +175,82 @@ inline void * procuraCaminhos(void * args){
 
 	empilhaPosOrdem(elemento_inferior, elemento_superior, nivel_base, arvoreExpansao, arvoreCompleta);
 
-	imprimeCaminho(caminho);
+	/* imprimeCaminho(caminho); */
 
-	printf("indiceAtual: %d\n", indiceAtual);
-	printf("tamanho: %d\n", arvoreExpansao.size());
+	/* printf("indiceAtual: %d\n", indiceAtual); */
+	/* printf("tamanho: %d\n", arvoreExpansao.size()); */
+
+	/* imprimeArvore(arvoreExpansao); */
+
+	/* printf("\n\n"); */
+
+	vector<vector<pair<int, pair<int, int>>>> solucoes;
+
+	while(!arvoreExpansao.empty()){
+		while(arvoreExpansao.top().first > caminho.back().first){
+			caminho.push_back(arvoreExpansao.top());
+			posicoes_visitadas[caminho.back().second] = true;
+			arvoreExpansao.pop();
+			if(arvoreExpansao.top().first <= caminho.back().first){
+			       	gerarMovimentosPossiveis(tamanho_tabuleiro, caminho, posicoes_visitadas, arvoreExpansao);
+				break;
+			}
+		}
+		if(caminho.size() == tamanho_tabuleiro * tamanho_tabuleiro){
+			printf("aaaa\n");
+			solucoes.push_back(caminho);
+			posicoes_visitadas[caminho.back().second] = false;
+			caminho.pop_back();
+		}
+		if(arvoreExpansao.top().first <= caminho.back().first){
+			posicoes_visitadas[caminho.back().second] = false;
+			caminho.pop_back();
+			/* printf("cs: %d\n", caminho.size()); */
+		}
+
+		if(caminho.size() > 34){
+			printf("t: %d, s: %d c: %d | ", indiceAtual, solucoes.size(), caminho.size());
+			imprimeCaminhoHorizontal(tamanho_tabuleiro, caminho);
+		}
+
+	}
+	printf("solucoes: %d\n", solucoes.size());
+
+
+
+}
+
+inline void gerarMovimentosPossiveis(int tamanho_tabuleiro, vector<pair<int, pair<int, int>>> &caminho, map<pair<int, int>, bool> &posicoes_visitadas, stack<pair<int, pair<int, int>>> &arvoreExpansao){
+	int movimentos[][2] = {{-2, 1}, {-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}};	
+	int pos_x = caminho.back().second.first;
+	int pos_y = caminho.back().second.second;
+	int nivel = caminho.back().first;
+	for(int i = 0; i < 8; i++){
+		int mov_x = pos_x + movimentos[i][0];
+		int mov_y = pos_y + movimentos[i][1];
+		if(mov_x >= 0 and mov_x < tamanho_tabuleiro and mov_y >= 0 and mov_y < tamanho_tabuleiro) if(!posicoes_visitadas[make_pair(mov_x, mov_y)] or posicoes_visitadas[make_pair(mov_x, mov_y)] == false) arvoreExpansao.push(make_pair(nivel + 1, make_pair(mov_x, mov_y)));	
+	}
+}
+
+inline void imprimeArvore(stack<pair<int, pair<int, int>>> arvoreExpansao){
 	while(!arvoreExpansao.empty()){
 		pair<int, pair<int, int>> elemento = arvoreExpansao.top();
 		printf("%d -> %d, %d\n", elemento.first, elemento.second.first, elemento.second.second);
 		arvoreExpansao.pop();
 	}
+}
 
-	printf("\n\n");
+inline void imprimeCaminhoHorizontal(int tamanho_tabuleiro, vector<pair<int, pair<int, int>>> &caminho){
+	for(auto& i : caminho)
+		printf("%d -- ", i.second.first * tamanho_tabuleiro + i.second.second);
+	printf("\n");
+}
 
-	/* empilha caminhos faltando */
-	/* nivel_atual = arvoreCompleta.size() - 1; */
-	/* ultimo_pai = arvoreCompleta[nivel_atual][0].first; */
-	/* arvoreExpansação.push(make_pair(nivel_atual, arvoreCompleta[nivel_atual][0].second)); */
 
-
+inline void imprimeCaminhoCoordenado(vector<pair<int, pair<int, int>>> &caminho){
+	for(auto& i : caminho)
+		printf("%d, %d -- ", i.second.first, i.second.first);
+	printf("\n");
 }
 
 inline void imprimeCaminho(vector<pair<int, pair<int, int>>> &caminho){
@@ -243,4 +284,3 @@ inline void empilhaPosOrdem(int elemento_inferior, int elemento_superior, int ni
 	/* 	} */
 		
 }
-
