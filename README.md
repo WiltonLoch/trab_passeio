@@ -1,9 +1,9 @@
 
 
-Trabalho final da disciplina de OPRP
-Competição de paralelização do algoritmo do passeio do cavalo
+# Trabalho final da disciplina de OPRP
+## Competição de paralelização do algoritmo do passeio do cavalo
 
-h2 To do
+###### To do
 
 - [x] Passeio do cavalo 
 - [x] Multithread (paralelismo com Openmp)
@@ -14,6 +14,6 @@ h2 To do
 
 Artigo SBPO - Heursticas para o passeio do cavalo: [Artigo](http://vigusmao.github.io/manuscripts/knightstour-SBPO.pdf)
 
-Autores
+###### Autores
 * Wilton Loch 
 * Eduarda Cristina 
