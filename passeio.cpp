@@ -274,7 +274,7 @@ inline void empilhaPosOrdem(int elemento_inferior, int elemento_superior, int ni
 	}
 
 	// Coloquei um comentario pra ele ver q tinha mudanças e aceitar o commit, poxa github pq me matastes?!
-	// Ia fazer surpresa qnd vc abrisse o código e visse tudo la ja, o readme bonitin q fiz e tals... aff
+	// Ia fazer surpresa qnd vc abrisse o código e visse tudo la ja, o readme bonitin q fiz e tals
 	// te amo
 
 	/* for(int i = 1; i <= elemento_superior; i++) */
