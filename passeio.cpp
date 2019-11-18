@@ -58,6 +58,7 @@ int main(int argc, char *argv[]){
 		parametros[i].qtd_tasks = qtd_tasks;
 		parametros[i].nucleos_por_maquina = nucleos_por_maquina;
 		parametros[i].tamanho_tabuleiro = tamanho_tabuleiro;
+
 		pthread_create(threads + i, NULL, procuraCaminhos, (void *) (parametros + i));
 	}
 	
@@ -77,7 +78,6 @@ inline void * procuraCaminhos(void * args){
 
 	param * p = (param *) args;
 
-	printf("aaaa\n");
 	int indiceAtual = p->indiceAtual;
 	int qtd_maquinas = p->qtd_tasks;
 	int tamanho_tabuleiro = p->tamanho_tabuleiro;
@@ -95,7 +95,7 @@ inline void * procuraCaminhos(void * args){
 			if((tamanho_tabuleiro % 2) == 1) if((x + y) % 2 == 1) continue;
 			printf("t %d entrando em: %d, %d\n", indiceAtual, x, y);
 			maiorNivel.push_back(make_pair(-1, make_pair(x, y)));
-			while(maiorNivel.size() < nucleos_por_maquina * qtd_maquinas * 3){
+			while(maiorNivel.size() < nucleos_por_maquina * qtd_maquinas * 100){
 				arvoreCompleta.push_back(maiorNivel);
 				maiorNivel.clear();
 				for(int i = 0; i < arvoreCompleta.back().size(); i++){
@@ -134,6 +134,7 @@ inline void * procuraCaminhos(void * args){
 			/* 	for(int j = 0; j < arvoreCompleta[i].size(); j++) */
 			/* 		printf("\tnivel = %d, pai = %d, pos: %d - %d\n", i, arvoreCompleta[i][j].first, arvoreCompleta[i][j].second.first, arvoreCompleta[i][j].second.second); */
 
+			/* printf("i %d mn: %d\n", indiceAtual, maiorNivel.size()); */
 			int nivel_base = arvoreCompleta.size() - 1; 
 
 			int nucleos_totais = qtd_maquinas * nucleos_por_maquina;
@@ -149,7 +150,6 @@ inline void * procuraCaminhos(void * args){
 
 			int primeiro_pai = arvoreCompleta[nivel_base][elemento_inferior].first, ultimo_pai = arvoreCompleta[nivel_base][elemento_superior].first;
 
-			/* printf("saiu t: %d\n", indiceAtual); */
 
 			/* encontra qual é o pai comum aos caminhos da thread, de modo a saber qual o menor nível(nivel_base) que não deve ser retirado do caminho */
 			while(primeiro_pai != ultimo_pai and nivel_base > 0){
