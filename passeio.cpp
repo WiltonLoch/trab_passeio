@@ -22,7 +22,6 @@ typedef struct{
 	int qtd_tasks;
 	int nucleos_por_maquina;
 	int tamanho_tabuleiro;
-	int minimo_nos;
 } param;
 
 inline void * procuraCaminhos(void * args);
@@ -36,14 +35,13 @@ inline void imprimeCaminhoCoordenado(vector<pair<int, pair<int, int>>> &caminho)
 int main(int argc, char *argv[]){
 	int qtd_tasks, id_task;
 
-	if(argc < 4){
-		printf("Chamada incorreta!\n Uso: passeio <tamanho tabuleiro> <threads> <minimo nos>\n");
+	if(argc < 3){
+		printf("Chamada incorreta!\n Uso: passeio <tamanho tabuleiro> <threads>\n");
 		return 0;
 	}
 
 	int tamanho_tabuleiro = stoi(argv[1]);
 	int nucleos_por_maquina = stoi(argv[2]);
-	int minimo_nos = stoi(argv[3]);
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &id_task);	
@@ -59,15 +57,13 @@ int main(int argc, char *argv[]){
 		parametros[i].indiceAtual = id_task * nucleos_por_maquina + i;
 		parametros[i].qtd_tasks = qtd_tasks;
 		parametros[i].nucleos_por_maquina = nucleos_por_maquina;
-		parametros[i].minimo_nos = minimo_nos;
 		parametros[i].tamanho_tabuleiro = tamanho_tabuleiro;
-
 		pthread_create(threads + i, NULL, procuraCaminhos, (void *) (parametros + i));
 	}
 	
-	/* for(int i = 0; i < nucleos_por_maquina; i++){ */
-	/* 	pthread_join(threads[i], NULL); */
-	/* } */
+	for(int i = 0; i < nucleos_por_maquina; i++){
+		pthread_join(threads[i], NULL);
+	}
 
 	free(threads);
 	free(parametros);
@@ -81,11 +77,11 @@ inline void * procuraCaminhos(void * args){
 
 	param * p = (param *) args;
 
+	printf("aaaa\n");
 	int indiceAtual = p->indiceAtual;
 	int qtd_maquinas = p->qtd_tasks;
 	int tamanho_tabuleiro = p->tamanho_tabuleiro;
 	int nucleos_por_maquina = p->nucleos_por_maquina;
-	int minimo_nos = p->minimo_nos;
 
 	vector<vector<pair<int, pair<int, int>>>> arvoreCompleta;
 	vector<pair<int, pair<int, int>>> maiorNivel;
@@ -99,7 +95,7 @@ inline void * procuraCaminhos(void * args){
 			if((tamanho_tabuleiro % 2) == 1) if((x + y) % 2 == 1) continue;
 			printf("t %d entrando em: %d, %d\n", indiceAtual, x, y);
 			maiorNivel.push_back(make_pair(-1, make_pair(x, y)));
-			while(maiorNivel.size() < nucleos_por_maquina * qtd_maquinas * minimo_nos){
+			while(maiorNivel.size() < nucleos_por_maquina * qtd_maquinas * 3){
 				arvoreCompleta.push_back(maiorNivel);
 				maiorNivel.clear();
 				for(int i = 0; i < arvoreCompleta.back().size(); i++){
