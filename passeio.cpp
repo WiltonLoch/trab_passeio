@@ -95,7 +95,7 @@ inline void * procuraCaminhos(void * args){
 			if((tamanho_tabuleiro % 2) == 1) if((x + y) % 2 == 1) continue;
 			/* printf("t %d entrando em: %d, %d\n", indiceAtual, x, y); */
 			maiorNivel.push_back(make_pair(-1, make_pair(x, y)));
-			while(maiorNivel.size() < nucleos_por_maquina * qtd_maquinas * 10){
+			while(maiorNivel.size() < nucleos_por_maquina * qtd_maquinas * 3){
 				arvoreCompleta.push_back(maiorNivel);
 				maiorNivel.clear();
 				for(int i = 0; i < arvoreCompleta.back().size(); i++){
