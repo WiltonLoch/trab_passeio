@@ -18,6 +18,8 @@ using namespace std;
 /* #define NUCLEOS_POR_MAQUINA 4 */
 /* #define TAMANHO_TABULEIRO 6 */
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 typedef struct{
 	int indiceAtual;
 	int qtd_tasks;
@@ -221,6 +223,7 @@ inline void * procuraCaminhos(void * args){
 				}
 				if(arvoreExpansao.empty()) break;
 				if(caminho.size() == tamanho_tabuleiro * tamanho_tabuleiro){
+					pthread_mutex_lock(&mutex);
 					/* for(auto& coordenadas : caminho) */
 						/* solucoes.push_back(coordenadas.second.first * tamanho_tabuleiro + coordenadas.second.second); */
 					for(auto& coordenadas : caminho)
@@ -262,6 +265,7 @@ inline void * procuraCaminhos(void * args){
 						printf("%d ", (5 - coordenadas.second.second) * tamanho_tabuleiro + coordenadas.second.first);
 					printf("\n");
 					posicoes_visitadas[caminho.back().second] = false;
+					pthread_mutex_unlock(&mutex);
 					caminho.pop_back();
 				}
 				if(arvoreExpansao.top().first <= caminho.back().first){
