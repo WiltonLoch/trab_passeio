@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <mpi.h>
+#include <fstream>
 
 #include <vector>
 #include <utility>
@@ -64,7 +65,17 @@ int main(int argc, char *argv[]){
 
 		pthread_create(threads + i, NULL, procuraCaminhos, (void *) (parametros + i));
 	}
-	
+	/* if(id_task == 0){ */
+		/* int qtd_coordenadas = 1000 * tamanho_tabuleiro * tamanho_tabuleiro; */
+		/* int i = 1; */
+		/* int * solucoes = NULL; */
+		/* while(true){ */
+		/* 	solucoes = (int*) realloc(solucoes, i * qtd_coordenadas * sizeof(int)); */
+		/* 	MPI_Recv(solucoes, qtd_coordenadas, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); */
+		/* 	i++; */
+		/* } */	
+	/* } */
+
 	for(int i = 0; i < nucleos_por_maquina; i++){
 		pthread_join(threads[i], NULL);
 	}
@@ -96,8 +107,10 @@ inline void * procuraCaminhos(void * args){
 
 	for(int x = 0; x < tamanho_tabuleiro/2; x++){
 		for(int y = 0; y <= x; y++){
+	/* for(int x = tamanho_tabuleiro/2 - 1; x >= 0; x--){ */
+		/* for(int y = x; y >= 0; y--){ */
 			if((tamanho_tabuleiro % 2) == 1) if((x + y) % 2 == 1) continue;
-			printf("t %d entrando em: %d, %d\n", indiceAtual, x, y);
+			/* printf("t %d entrando em: %d, %d\n", indiceAtual, x, y); */
 			maiorNivel.push_back(make_pair(-1, make_pair(x, y)));
 			while(maiorNivel.size() < nucleos_por_maquina * qtd_maquinas * minimo_nos){
 				arvoreCompleta.push_back(maiorNivel);
@@ -184,9 +197,9 @@ inline void * procuraCaminhos(void * args){
 			arvoreCompleta.clear();
 			maiorNivel.clear();
 
+			/* printf("indiceAtual: %d\n", indiceAtual); */
 			/* imprimeCaminho(caminho); */
 
-			/* printf("indiceAtual: %d\n", indiceAtual); */
 			/* printf("tamanho: %d\n", arvoreExpansao.size()); */
 
 			/* imprimeArvore(arvoreExpansao); */
@@ -202,13 +215,52 @@ inline void * procuraCaminhos(void * args){
 					arvoreExpansao.pop();
 					if(arvoreExpansao.empty() or arvoreExpansao.top().first <= caminho.back().first){
 						gerarMovimentosPossiveis(tamanho_tabuleiro, caminho, posicoes_visitadas, arvoreExpansao);
+						/* if(solucoes.size() > 0)printf("t: %d s: %d\n", indiceAtual, solucoes.size()); */
 						break;
 					}
 				}
 				if(arvoreExpansao.empty()) break;
 				if(caminho.size() == tamanho_tabuleiro * tamanho_tabuleiro){
+					/* for(auto& coordenadas : caminho) */
+						/* solucoes.push_back(coordenadas.second.first * tamanho_tabuleiro + coordenadas.second.second); */
 					for(auto& coordenadas : caminho)
-						solucoes.push_back(coordenadas.second.first * tamanho_tabuleiro + coordenadas.second.second);
+						printf("%d ", coordenadas.second.first * tamanho_tabuleiro + coordenadas.second.second);
+
+					printf("\n");
+					for(auto& coordenadas : caminho)
+						printf("%d ", coordenadas.second.second * tamanho_tabuleiro + 5 - coordenadas.second.first);
+
+					printf("\n");
+					for(auto& coordenadas : caminho)
+						printf("%d ", (5 -coordenadas.second.first) * tamanho_tabuleiro + (5 - coordenadas.second.second));
+
+					printf("\n");
+					for(auto& coordenadas : caminho)
+						printf("%d ", (5 - coordenadas.second.second) * tamanho_tabuleiro + coordenadas.second.first);
+
+					printf("\n");
+					vector<pair<int, pair<int, int>>> espelho;
+					espelho = caminho;
+					int aux;
+					for(auto& coordenadas : espelho){
+						aux = coordenadas.second.first;
+						coordenadas.second.first = coordenadas.second.second;
+						coordenadas.second.second = aux;
+						printf("%d ", coordenadas.second.first * tamanho_tabuleiro + coordenadas.second.second);
+					}
+
+					printf("\n");
+					for(auto& coordenadas : espelho)
+						printf("%d ", coordenadas.second.second * tamanho_tabuleiro + 5 - coordenadas.second.first);
+
+					printf("\n");
+					for(auto& coordenadas : espelho)
+						printf("%d ", (5 -coordenadas.second.first) * tamanho_tabuleiro + (5 - coordenadas.second.second));
+
+					printf("\n");
+					for(auto& coordenadas : espelho)
+						printf("%d ", (5 - coordenadas.second.second) * tamanho_tabuleiro + coordenadas.second.first);
+					printf("\n");
 					posicoes_visitadas[caminho.back().second] = false;
 					caminho.pop_back();
 				}
@@ -218,14 +270,21 @@ inline void * procuraCaminhos(void * args){
 					/* printf("cs: %d\n", caminho.size()); */
 				}
 
-				/* if(caminho.size() > 34){ */
+				/* if(solucoes.size() == 1000 * tamanho_tabuleiro * tamanho_tabuleiro){ */
+					/* MPI_Send(solucoes.data(), 1000 * tamanho_tabuleiro * tamanho_tabuleiro, MPI_INT, 0, 0, MPI_COMM_WORLD); */	
+					/* printf("t %d enviando 1000 soluções\n", indiceAtual); */
+					/* solucoes.clear(); */
+				/* } */
+				/* if(caminho.size() > 33){ */
 					/* printf("t: %d, s: %d c: %d | ", indiceAtual, solucoes.size(), caminho.size()); */
 					/* imprimeCaminhoHorizontal(tamanho_tabuleiro, caminho); */
 				/* } */
 
 			}
-			printf("t: %d | solucoes: %d\n", indiceAtual, solucoes.size()/(tamanho_tabuleiro*tamanho_tabuleiro));
-			
+			/* printf("t: %d | solucoes: %d\n", indiceAtual, solucoes.size()/(tamanho_tabuleiro*tamanho_tabuleiro)); */
+			/* int qtd_solucoes = solucoes.size(); */
+			/* MPI_Send(&qtd_solucoes, 1, MPI_INT, 0, 0, MPI_COMM_WORLD); */	
+			/* MPI_Send(solucoes.data(), qtd_solucoes, MPI_INT, 0, 0, MPI_COMM_WORLD); */	
 			solucoes.clear();
 			caminho.clear();
 			posicoes_visitadas.clear();
